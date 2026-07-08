@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlickFinder — Routing Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <span class="brand">FlickFinder<span class="brand-dim">.exe</span></span>
+    <div class="nav-links">
+      <a href="https://sugarsheriff.github.io/lookatme/">Portfolio</a>
+      <a href="https://github.com/SugarSheriff/FlickFinder" target="_blank" rel="noopener">Source ↗</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div class="intro">
+    <span class="eyebrow">route.select_medium — node 1 / 4</span>
+    <p class="intro-copy">A small decision-tree client that queries TMDB live and routes you to something to watch, instead of scrolling forever.</p>
+  </div>
+
+  <div class="console" id="console">
+    <div class="console-header">
+      <span><span class="dot"></span>routing-console</span>
+      <span id="statusTag">node 1 / 4</span>
+    </div>
+    <div class="trace-rail" id="traceRail"></div>
+    <div class="body-area" id="bodyArea"></div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span>Built by <a href="https://sugarsheriff.github.io/lookatme/">Liam Hulsey</a> — data pulled live from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>.</span>
+    <a href="https://github.com/SugarSheriff/FlickFinder" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
