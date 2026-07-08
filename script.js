@@ -11,10 +11,13 @@ const API_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmODYwZWVlZmZlZTdmY2NjODQ4Y2E0
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMG_BASE = "https://image.tmdb.org/t/p/w342";
 
-// ---- Decision tree state ----
 let answers = {};
 let step = 0;
 const TOTAL_STEPS = 4;
+
+// keyboard-routing state
+let activeOptions = [];   // [{value, onPick}] for the currently rendered question
+let screenMode = 'question'; // 'question' | 'result' | 'empty' | 'error'
 
 const bodyArea = document.getElementById('bodyArea');
 const traceRail = document.getElementById('traceRail');
@@ -30,9 +33,15 @@ function renderTrace(activeCount){
 }
 
 function renderQuestion(eyebrow, title, options, onPick, singleCol){
+  screenMode = 'question';
+  activeOptions = options.map(o => ({ value: o.value, onPick }));
+
   statusTag.textContent = `node ${step+1} / ${TOTAL_STEPS}`;
   renderTrace(step);
   bodyArea.innerHTML = '';
+  bodyArea.classList.remove('node-enter');
+  void bodyArea.offsetWidth; // restart animation
+  bodyArea.classList.add('node-enter');
 
   const eyeEl = document.createElement('div');
   eyeEl.className = 'eyebrow';
@@ -45,10 +54,10 @@ function renderQuestion(eyebrow, title, options, onPick, singleCol){
 
   const optsWrap = document.createElement('div');
   optsWrap.className = 'options' + (singleCol ? ' single-col' : '');
-  options.forEach(o=>{
+  options.forEach((o, i)=>{
     const btn = document.createElement('button');
     btn.className = 'opt';
-    btn.innerHTML = `<span class="label">${o.label}</span><span class="sub">${o.sub||''}</span>`;
+    btn.innerHTML = `<span class="key-hint">${i+1}</span><span class="label">${o.label}</span><span class="sub">${o.sub||''}</span>`;
     btn.onclick = () => onPick(o.value);
     optsWrap.appendChild(btn);
   });
@@ -56,11 +65,12 @@ function renderQuestion(eyebrow, title, options, onPick, singleCol){
 
   const status = document.createElement('div');
   status.className = 'status-line';
-  status.textContent = step === 0 ? 'select a route to begin' : '';
+  status.textContent = step === 0 ? 'tip: press 1–' + options.length + ' to answer' : '';
   bodyArea.appendChild(status);
 }
 
 function stepType(){
+  step = 0;
   renderQuestion(
     'route.select_medium',
     "What's on the menu tonight?",
@@ -123,7 +133,6 @@ function stepCommitment(){
   }
 }
 
-// ---- Genre + param mapping ----
 const GENRES = {
   movie: { laughs:35, tension:9648, feels:18, mindbend:878, comfort:28 },
   tv:    { laughs:35, tension:9648, feels:18, mindbend:10765, comfort:10759 }
@@ -154,7 +163,6 @@ function buildDiscoverUrl(){
       params.set('with_runtime.gte', '110');
     }
   } else {
-    // 3 = Ended, 0 = Returning Series
     params.set('with_status', answers.commitment === 'ended' ? '3' : '0');
   }
 
@@ -162,14 +170,46 @@ function buildDiscoverUrl(){
 }
 
 async function resolve(){
+  screenMode = 'loading';
+  activeOptions = [];
   statusTag.textContent = 'node 4 / 4';
   renderTrace(4);
+
+  const hops = [
+    'reading route parameters',
+    `querying tmdb.discover(${answers.type})`,
+    'filtering by rating threshold',
+    'selecting a match'
+  ];
+
   bodyArea.innerHTML = `
+    <div class="eyebrow">route.resolving</div>
     <div class="loading">
-      <span class="spinner"></span>
-      <span>querying tmdb.discover(${answers.type})...</span>
+      <div class="loading-track"><div class="pulse"></div></div>
+      <div class="loading-hops" id="loadingHops"></div>
     </div>
   `;
+  const hopsEl = document.getElementById('loadingHops');
+  hops.forEach((h, i)=>{
+    const div = document.createElement('div');
+    div.className = 'hop';
+    div.textContent = h;
+    div.style.animationDelay = (i * 0.12) + 's';
+    hopsEl.appendChild(div);
+  });
+
+  const hopEls = Array.from(hopsEl.children);
+  let hopIdx = 0;
+  const hopTimer = setInterval(()=>{
+    hopEls.forEach(el => el.classList.remove('active'));
+    if(hopIdx < hopEls.length){
+      hopEls[hopIdx].classList.add('active');
+      if(hopIdx > 0) hopEls[hopIdx-1].classList.remove('active');
+    }
+    if(hopIdx > 0) hopEls[hopIdx-1].classList.add('done');
+    hopIdx++;
+    if(hopIdx > hopEls.length) hopIdx = 0;
+  }, 420);
 
   try{
     const url = buildDiscoverUrl();
@@ -180,6 +220,9 @@ async function resolve(){
     const data = await res.json();
     let results = (data.results || []).filter(r => r.poster_path);
 
+    clearInterval(hopTimer);
+    hopEls.forEach(el => { el.classList.add('done'); el.classList.remove('active'); });
+
     if(results.length === 0){
       renderEmpty();
       return;
@@ -187,8 +230,10 @@ async function resolve(){
 
     window._resultPool = results;
     window._resultIdx = new Set();
-    showResult();
+    // brief pause so the completed hop list is visible before the reveal
+    setTimeout(showResult, 260);
   } catch(err){
+    clearInterval(hopTimer);
     renderError(err.message);
   }
 }
@@ -204,6 +249,8 @@ function pickUnusedResult(){
 }
 
 function showResult(){
+  screenMode = 'result';
+  activeOptions = [];
   const item = pickUnusedResult();
   const title = item.title || item.name;
   const date = item.release_date || item.first_air_date || '';
@@ -212,6 +259,10 @@ function showResult(){
   const overview = item.overview || 'No synopsis on file.';
 
   bodyArea.innerHTML = '';
+  bodyArea.classList.remove('node-enter');
+  void bodyArea.offsetWidth;
+  bodyArea.classList.add('node-enter');
+
   const eyeEl = document.createElement('div');
   eyeEl.className = 'eyebrow';
   eyeEl.textContent = 'route.resolved — 200 OK';
@@ -220,13 +271,15 @@ function showResult(){
   const result = document.createElement('div');
   result.className = 'result';
   result.innerHTML = `
-    <img class="poster" src="${IMG_BASE}${item.poster_path}" alt="${title} poster" />
+    <div class="poster-wrap">
+      <img class="poster" src="${IMG_BASE}${item.poster_path}" alt="${title} poster" />
+    </div>
     <div class="result-meta">
       <h2 class="result-title">${title}</h2>
       <div class="result-tags">${year} · ${answers.type.toUpperCase()} · ★ ${rating}</div>
       <p class="result-overview">${overview}</p>
       <div class="result-actions">
-        <button class="btn primary" id="rerollBtn">Reroll match</button>
+        <button class="btn primary" id="rerollBtn">Reroll match <span style="opacity:.6">(r)</span></button>
         <button class="btn" id="restartBtn">Start over</button>
       </div>
     </div>
@@ -234,10 +287,12 @@ function showResult(){
   bodyArea.appendChild(result);
 
   document.getElementById('rerollBtn').onclick = showResult;
-  document.getElementById('restartBtn').onclick = () => { answers = {}; step = 0; stepType(); };
+  document.getElementById('restartBtn').onclick = () => { answers = {}; stepType(); };
 }
 
 function renderEmpty(){
+  screenMode = 'empty';
+  activeOptions = [];
   bodyArea.innerHTML = `
     <div class="eyebrow">route.resolved — 204 No Content</div>
     <h1>No match on this exact route.</h1>
@@ -246,10 +301,12 @@ function renderEmpty(){
       <button class="btn primary" id="restartBtn2">Start over</button>
     </div>
   `;
-  document.getElementById('restartBtn2').onclick = () => { answers = {}; step = 0; stepType(); };
+  document.getElementById('restartBtn2').onclick = () => { answers = {}; stepType(); };
 }
 
 function renderError(msg){
+  screenMode = 'error';
+  activeOptions = [];
   bodyArea.innerHTML = `
     <div class="eyebrow">route.error</div>
     <h1>Connection dropped.</h1>
@@ -260,6 +317,25 @@ function renderError(msg){
   `;
   document.getElementById('retryBtn').onclick = resolve;
 }
+
+// ---- keyboard shortcuts: numbers answer questions, r rerolls, s restarts ----
+document.addEventListener('keydown', (e)=>{
+  if(screenMode === 'question'){
+    const n = parseInt(e.key, 10);
+    if(n && n >= 1 && n <= activeOptions.length){
+      const opt = activeOptions[n-1];
+      opt.onPick(opt.value);
+    }
+  } else if(screenMode === 'result'){
+    if(e.key.toLowerCase() === 'r'){
+      const btn = document.getElementById('rerollBtn');
+      if(btn) btn.click();
+    } else if(e.key.toLowerCase() === 's'){
+      const btn = document.getElementById('restartBtn');
+      if(btn) btn.click();
+    }
+  }
+});
 
 // boot
 stepType();
