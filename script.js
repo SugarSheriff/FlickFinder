@@ -27,7 +27,12 @@ function renderTrace(activeCount){
   traceRail.innerHTML = '';
   for(let i=0;i<TOTAL_STEPS;i++){
     const seg = document.createElement('div');
-    seg.className = 'trace-seg' + (i < activeCount ? ' lit' : '');
+    let cls = 'trace-seg';
+    if(i < activeCount){
+      cls += ' lit';
+      if(i === activeCount - 1) cls += ' sweep'; // only the just-completed node animates
+    }
+    seg.className = cls;
     traceRail.appendChild(seg);
   }
 }
@@ -336,6 +341,8 @@ document.addEventListener('keydown', (e)=>{
     }
   }
 });
+
+document.getElementById('resetBtn').onclick = () => { answers = {}; stepType(); };
 
 // boot
 stepType();

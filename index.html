@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FlickFinder — Routing Console</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="alternate icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -29,7 +34,10 @@
   <div class="console" id="console">
     <div class="console-header">
       <span><span class="dot"></span>routing-console</span>
-      <span id="statusTag">node 1 / 4</span>
+      <div class="header-right">
+        <span id="statusTag">node 1 / 4</span>
+        <button class="reset-btn" id="resetBtn" title="Reset and start over">↺ reset</button>
+      </div>
     </div>
     <div class="trace-rail" id="traceRail"></div>
     <div class="body-area" id="bodyArea"></div>

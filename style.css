@@ -138,6 +138,20 @@ a:focus-visible, button:focus-visible{ outline: 2px solid var(--accent); outline
   box-shadow: 0 0 6px var(--accent);
   animation: dotPulse 2s ease-in-out infinite;
 }
+.header-right{ display: flex; align-items: center; gap: 12px; }
+.reset-btn{
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.reset-btn:hover{ color: var(--accent); border-color: var(--accent-dim); }
 @keyframes dotPulse{
   0%,100%{ opacity: 1; }
   50%{ opacity: 0.4; }
@@ -164,6 +178,8 @@ a:focus-visible, button:focus-visible{ outline: 2px solid var(--accent); outline
   background: linear-gradient(90deg, var(--accent-dim), var(--accent));
   box-shadow: 0 0 8px var(--accent);
   transform-origin: left;
+}
+.trace-seg.lit.sweep::after{
   animation: traceSweep 0.5s ease-out both;
 }
 @keyframes traceSweep{
